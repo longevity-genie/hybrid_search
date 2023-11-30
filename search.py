@@ -5,11 +5,6 @@ from resolvers import resolve_embeddings
 from resolvers import EmbeddingType
 import time
 
-loader = DirectoryLoader('./tacutopapers_test_rsids_10k/', glob="*.txt")
-docs = loader.load()
-for i, doc in enumerate(docs):
-    doc.metadata["page_id"] = doc.metadata["source"].split("\\")[-1].split(".")[0]
-
 embeddings = resolve_embeddings(EmbeddingType.HuggingFaceBGE)
 
 docsearch = OpenSearchHybridSearch(

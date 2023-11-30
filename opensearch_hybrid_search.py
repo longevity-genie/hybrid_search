@@ -38,7 +38,7 @@ def _hybrid_search_query(query_vector: List[float], k: int = 4, vector_field: st
     }
 
 
-class OpenSearchHybridSearch(OpenSearchVectorSearch)
+class OpenSearchHybridSearch(OpenSearchVectorSearch):
 
     def prepare_pipeline(self,
                          url:str = "https://localhost:9200",
