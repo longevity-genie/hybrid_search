@@ -1,7 +1,45 @@
+
+import click
+from hybrid_search.opensearch_hybrid_search import HYBRID_SEARCH
+from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
+from langchain.embeddings import HuggingFaceBgeEmbeddings
+
+
+@click.command()
+@click.option('--opensearch_url', default='http://localhost:9200', help='URL of the OpenSearch instance')
+@click.option('--index_name', default='my_index', help='Name of the index in OpenSearch')
+@click.option('--device', default='cpu', help='Device to run the model on (e.g., cpu, cuda)')
+@click.option('--model_name', default='BAAI/bge-base-en-v1.5', help='Name of the model to use')
+@click.option('--query', prompt='Enter your search query', help='The query to search for')
+@click.option('--k', default=10, help='Number of search results to return')
+def main(opensearch_url, index_name, device, model_name, query, k):
+    model_kwargs = {"device": device}
+    encode_kwargs = {"normalize_embeddings": True}
+
+    embeddings = HuggingFaceBgeEmbeddings(
+        model_name=model_name,
+        model_kwargs=model_kwargs,
+        encode_kwargs=encode_kwargs
+    )
+
+    docsearch = OpenSearchHybridSearch(
+        opensearch_url,
+        index_name,
+        embeddings
+    )
+
+    # Example functionality: Performing a search and printing results
+    results = docsearch.search(query, k=k, search_type = HYBRID_SEARCH, search_pipeline = "norm-pipeline")
+    print("Search Results:")
+    for result in results:
+        print(result)
+
+if __name__ == '__main__':
+    main()
+
+'''
 from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
 from hybrid_search.opensearch_hybrid_search import HYBRID_SEARCH
-from resolvers import resolve_embeddings
-from resolvers import EmbeddingType
 import time
 from langchain.embeddings import HuggingFaceBgeEmbeddings
 
@@ -53,3 +91,4 @@ for doc in docs:
 
 
 print("Finish")
+'''
