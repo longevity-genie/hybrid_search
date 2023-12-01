@@ -9,9 +9,11 @@ dependencies:
   - python=3.10
   - setuptools
   - pytorch
+  - pdfminer.six
   - pip:
       - langchain
       - pycomfort>=0.0.13
-      - unstructured
       - sentence_transformers
       - opensearch-py
+      - unstructured
+      - unstructured.PaddleOCR

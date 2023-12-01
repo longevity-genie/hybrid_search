@@ -41,12 +41,12 @@ def _hybrid_search_query(query_vector: List[float], k: int = 4, vector_field: st
 class OpenSearchHybridSearch(OpenSearchVectorSearch):
 
     def prepare_pipeline(self,
-                         url:str = "https://localhost:9200",
-                         auth:tuple = ("admin", "admin"),
-                         search_pipeline:str = "norm-pipeline",
-                         normalization:str = "min_max",
-                         combination:str = "arithmetic_mean",
-                         verify:bool =False) -> Response:
+                         url: str = "https://localhost:9200",
+                         auth: tuple = ("admin", "admin"),
+                         search_pipeline: str = "norm-pipeline",
+                         normalization: str = "min_max",
+                         combination: str = "arithmetic_mean",
+                         verify: bool =False) -> Response:
         import requests
 
         # Making a PUT request

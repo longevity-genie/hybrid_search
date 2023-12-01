@@ -1,11 +1,19 @@
-from langchain.document_loaders import DirectoryLoader
-from opensearch_hybrid_search import OpenSearchHybridSearch
-from opensearch_hybrid_search import HYBRID_SEARCH
+from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
+from hybrid_search.opensearch_hybrid_search import HYBRID_SEARCH
 from resolvers import resolve_embeddings
 from resolvers import EmbeddingType
 import time
+from langchain.embeddings import HuggingFaceBgeEmbeddings
 
-embeddings = resolve_embeddings(EmbeddingType.HuggingFaceBGE)
+model_name = "BAAI/bge-base-en-v1.5"
+model_kwargs = {"device": "cpu"}
+encode_kwargs = {"normalize_embeddings": True}
+
+embeddings = HuggingFaceBgeEmbeddings(
+    model_name=model_name,
+    model_kwargs=model_kwargs,
+    encode_kwargs=encode_kwargs
+)
 
 docsearch = OpenSearchHybridSearch(
     opensearch_url="https://localhost:9200",
@@ -33,9 +41,9 @@ print(query, "opensearch size:", len(docs), " time:", time.time() - start)
 for doc in docs:
     print(doc.metadata["page_id"])
 
-query = "Comics superherows"
-# Only 114 document has text about superherows.
-# Text did not contain words 'comics' or 'superherow'
+query = "Comics superheroes"
+# Only 114 document has text about superheroes.
+# Text did not contain words 'comics' or 'superheroes'
 
 start = time.time()
 docs = docsearch.similarity_search(query, k=10, search_type = HYBRID_SEARCH, search_pipeline = "norm-pipeline")

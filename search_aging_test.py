@@ -1,6 +1,5 @@
-from langchain.document_loaders import DirectoryLoader
-from opensearch_hybrid_search import OpenSearchHybridSearch
-from opensearch_hybrid_search import HYBRID_SEARCH
+from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
+from hybrid_search.opensearch_hybrid_search import HYBRID_SEARCH
 from resolvers import resolve_embeddings
 from resolvers import EmbeddingType
 import time
