@@ -7,12 +7,12 @@ from langchain.embeddings import HuggingFaceBgeEmbeddings
 
 @click.command()
 @click.option('--opensearch_url', default='http://localhost:9200', help='URL of the OpenSearch instance')
-@click.option('--index_name', default='my_index', help='Name of the index in OpenSearch')
+@click.option('--index_name', default='index_test_rsids_10k', help='Name of the index in OpenSearch')
 @click.option('--device', default='cpu', help='Device to run the model on (e.g., cpu, cuda)')
 @click.option('--model_name', default='BAAI/bge-base-en-v1.5', help='Name of the model to use')
-@click.option('--query', prompt='Enter your search query', help='The query to search for')
+@click.option('--query', default='What is ageing?', help='The query to search for')
 @click.option('--k', default=10, help='Number of search results to return')
-def main(opensearch_url, index_name, device, model_name, query, k):
+def main(opensearch_url: str, index_name: str, device: str, model_name: str, query: str, k: int):
     model_kwargs = {"device": device}
     encode_kwargs = {"normalize_embeddings": True}
 
@@ -29,7 +29,8 @@ def main(opensearch_url, index_name, device, model_name, query, k):
     )
 
     # Example functionality: Performing a search and printing results
-    results = docsearch.search(query, k=k, search_type = HYBRID_SEARCH, search_pipeline = "norm-pipeline")
+    results = docsearch.similarity_search(query, k=k, search_type = HYBRID_SEARCH, search_pipeline = "norm-pipeline")
+
     print("Search Results:")
     for result in results:
         print(result)
