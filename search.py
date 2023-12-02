@@ -1,12 +1,8 @@
+import click
+from langchain.embeddings import HuggingFaceBgeEmbeddings
 
-import click
 from hybrid_search.opensearch_hybrid_search import HYBRID_SEARCH
 from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
-from langchain.embeddings import HuggingFaceBgeEmbeddings
-import click
-from hybrid_search.opensearch_hybrid_search import HYBRID_SEARCH
-from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
-from langchain.embeddings import HuggingFaceBgeEmbeddings
 
 
 @click.group(invoke_without_command=True)
