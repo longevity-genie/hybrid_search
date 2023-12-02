@@ -6,7 +6,7 @@ Created following this article https://opensearch.org/blog/hybrid-search/
 With conda or micromamba setup the environment:
 ```
 micromamba create -f environment.yaml
-microammba activate hybrid seach
+micromamba activate hybrid_search
 ```
 
 For the OpenSearch itself there are several installation options. 
@@ -14,6 +14,7 @@ For the OpenSearch itself there are several installation options.
 ### From docker-compose
 
 This repository goes with a test two nodes open-search cluster together with a dashboard.
+
 Optional: change OPENSEARCH_JAVA_OPTS=-Xms2512m -Xmx2512m according to your RAM availability, usually it is recommended to have them equal in side.
 Start docker-compose:
 ```bash
@@ -32,6 +33,11 @@ Open http://localhost:5601/ to explore the dashboard, "admin" is used both as us
 - Launch open-search either with docker-compose or java
 - Launch index.py for the initial indexing test dataset. It creates an index and pipeline for hybrid search.
 - Launch search to perform test search.
+```
+micromamba activate hybrid_search #to activate environment
+python index.py #to index
+python search.py # to search, uses default query
+```
 
 ## Tests
 
@@ -44,10 +50,20 @@ In particular for rs123456789 and rs123456788 as well as similar but misspelled 
 * 21.txt contains both wrong rsids one time
 * 22.txt and 23 contain only one wrong rsid
 
+You can test them by:
+```
+python search test_rsids
+```
+
 Also, similar test for "Comics superheroes" that will test embeddings:
 * Only 114 document has text about superheroes, but text did not contain words 'comics' or 'superheroes'
 
-Right now testing is not automated
+You can test them by:
+```
+python search test_heroes
+```
+
+Right now testing is not automated and you have to call CLI to test
 
 
 ## Troubleshooting

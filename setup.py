@@ -9,7 +9,7 @@ with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
 
 VERSION = '0.0.1'
 DESCRIPTION = 'Hybrid search'
-LONG_DESCRIPTION = 'Experimental package to make reviews easier'
+LONG_DESCRIPTION = 'Package for the hybrid search with opensearch library'
 
 # Setting up
 setup(
