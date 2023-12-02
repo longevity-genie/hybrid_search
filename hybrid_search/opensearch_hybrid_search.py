@@ -1,4 +1,5 @@
 # implementing article https://opensearch.org/blog/hybrid-search/
+import os
 
 from langchain.vectorstores import OpenSearchVectorSearch
 from langchain.vectorstores.opensearch_vector_search import SCRIPT_SCORING_SEARCH
@@ -9,45 +10,91 @@ from langchain.vectorstores.opensearch_vector_search import MATCH_ALL_QUERY
 from langchain.vectorstores.opensearch_vector_search import _default_script_query
 from langchain.vectorstores.opensearch_vector_search import PAINLESS_SCRIPTING_SEARCH
 from langchain.vectorstores.opensearch_vector_search import _default_painless_scripting_query
-from typing import Any, List
+from typing import Any, List, Optional
 import warnings
 
+from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 from requests import Response
 
 HYBRID_SEARCH = "hybrid_search"
 
-def _hybrid_search_query(query_vector: List[float], k: int = 4, vector_field: str = "vector_field", query: str = ""):
-    return {
-        "size": k,
-        "query": {
-            "hybrid": {
-               "queries": [
-                   {
-                       "match": {
-                           "text": {
-                               "query": query
-                           }
-                       }
-                   },
-                   {
-                       "knn": {vector_field: {"vector": query_vector, "k": k}}
-                   }
-               ]
-           }
-        }
-    }
-
 
 class OpenSearchHybridSearch(OpenSearchVectorSearch):
 
-    def prepare_pipeline(self,
-                         url: str = "https://localhost:9200",
-                         auth: tuple = ("admin", "admin"),
+    @classmethod
+    def create(
+            cls,
+            opensearch_url: str,
+            index_name: str,
+            embeddings: Embeddings,
+            login: Optional[str] = None,
+            password: Optional[str] = None,
+            use_ssl: bool = True,
+            verify_certs: bool = False,
+            ssl_assert_hostname: bool = False,
+            ssl_show_warn: bool = False,
+            documents: Optional[list[Document]] = None,
+            **kwargs: Any,
+    ) -> 'OpenSearchHybridSearch':
+        login = os.getenv("OPENSEARCH_USER", "admin") if login is None else login
+        password = os.getenv("OPENSEARCH_PASSWORD", "admin") if password is None else password
+        http_auth: tuple[str, str] = (login, password)
+        if documents is None or len(documents) == 0:
+            return cls(opensearch_url, index_name, embeddings,
+                       http_auth=http_auth,
+                       use_ssl=use_ssl,
+                       verify_certs=verify_certs,
+                       ssl_assert_hostname=ssl_assert_hostname,
+                       ssl_show_warn=ssl_show_warn,
+                       **kwargs)
+        else:
+            return OpenSearchHybridSearch.from_documents(
+                documents, embeddings,
+                opensearch_url=opensearch_url,
+                index_name = index_name,
+                http_auth=http_auth,
+                use_ssl=use_ssl,
+                verify_certs=verify_certs,
+                ssl_assert_hostname=ssl_assert_hostname,
+                ssl_show_warn=ssl_show_warn,
+                **kwargs
+            )
+
+    @staticmethod
+    def _hybrid_search_query(query_vector: List[float], k: int = 4, vector_field: str = "vector_field", query: str = ""):
+        return {
+            "size": k,
+            "query": {
+                "hybrid": {
+                    "queries": [
+                        {
+                            "match": {
+                                "text": {
+                                    "query": query
+                                }
+                            }
+                        },
+                        {
+                            "knn": {vector_field: {"vector": query_vector, "k": k}}
+                        }
+                    ]
+                }
+            }
+        }
+
+    @staticmethod
+    def prepare_pipeline(url: str = "https://localhost:9200",
+                         login: Optional[str] = None,
+                         password: Optional[str] = None,
                          search_pipeline: str = "norm-pipeline",
                          normalization: str = "min_max",
                          combination: str = "arithmetic_mean",
                          verify: bool =False) -> Response:
         import requests
+        login = os.getenv("OPENSEARCH_USER", "admin") if login is None else login
+        password = os.getenv("OPENSEARCH_PASSWORD", "admin") if password is None else password
+        auth: tuple[str, str] = (login, password)
 
         # Making a PUT request
         r: Response = requests.request(method="PUT", url=f"{url}/_search/pipeline/{search_pipeline}", auth=auth, verify=verify, json={
@@ -74,7 +121,6 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
         # print(r.content)
         return r
 
-
     def _raw_similarity_search_with_score(
         self, query: str, k: int = 4, **kwargs: Any
     ) -> List[dict]:
@@ -97,7 +143,7 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
         embedding = self.embedding_function.embed_query(query)
         search_type = kwargs.get("search_type", "approximate_search")
         vector_field = kwargs.get("vector_field", "vector_field")
-        index_name = kwargs.get("index_name", self.index_name)
+        index_name = kwargs.get("index_name", self.index_name) #DO WE NEED IT?
         filter = kwargs.get("filter", {})
 
         if (
@@ -183,7 +229,7 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                 embedding, k, space_type, pre_filter, vector_field
             )
         elif search_type == HYBRID_SEARCH:
-            search_query = _hybrid_search_query(embedding, k=k, vector_field=vector_field, query=query)
+            search_query = self._hybrid_search_query(embedding, k=k, vector_field=vector_field, query=query)
         else:
             raise ValueError("Invalid `search_type` provided as an argument")
 

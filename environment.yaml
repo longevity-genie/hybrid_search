@@ -15,5 +15,3 @@ dependencies:
       - pycomfort>=0.0.13
       - sentence_transformers
       - opensearch-py
-      - unstructured
-      - unstructured.PaddleOCR

@@ -162,6 +162,8 @@ local_cache
 node_modules
 yarn.lock
 
+__pycache__
+
 #Certificates
 *.pem
 *.csr

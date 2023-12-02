@@ -29,10 +29,27 @@ Open http://localhost:5601/ to explore the dashboard, "admin" is used both as us
 - For Linux use docker or follow instructions in the documentation.
 
 ## Usage:
+- Launch open-search either with docker-compose or java
 - Launch index.py for the initial indexing test dataset. It creates an index and pipeline for hybrid search.
 - Launch search to perform test search.
 
+## Tests
+
+There are text pieces deliberately incorporated into tacutu papers data ( /data/tacutopapers_test_rsids_10k )
+In particular for rs123456789 and rs123456788 as well as similar but misspelled rsids are added to the documents:
+* 10.txt contains both two times
+* 11.txt contains both one time
+* 12.txt and 13 contain only one rsid
+* 20.txt contains both wrong rsids two times
+* 21.txt contains both wrong rsids one time
+* 22.txt and 23 contain only one wrong rsid
+
+Also, similar test for "Comics superheroes" that will test embeddings:
+* Only 114 document has text about superheroes, but text did not contain words 'comics' or 'superheroes'
+
+Right now testing is not automated
+
+
 ## Troubleshooting
 
-If there is crazy libssl1_1 error, try to install it manually. It is the fault of unstructured.PaddleOCR dependency which directory loader of langchain is using.
 If something is not working with OpenSearch, read log messages carefully. For example, if you have small disk space it can block writing (watermark issue) that will cause failing with different final error message.
