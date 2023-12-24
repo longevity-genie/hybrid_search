@@ -10,9 +10,12 @@ dependencies:
   - setuptools
   - pytorch
   - pdfminer.six
+  - pydantic
   - pip:
-      - langchain
+      - langchain>=0.0.352
       - pycomfort>=0.0.13
       - sentence_transformers
       - opensearch-py
       - twine
+      - adapters
+      - psutil #some weird dependency

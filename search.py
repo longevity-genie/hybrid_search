@@ -1,9 +1,8 @@
 import click
 from langchain.embeddings import HuggingFaceBgeEmbeddings
-
+from langchain.schema import Document
 from hybrid_search.opensearch_hybrid_search import HYBRID_SEARCH
 from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
-
 
 @click.group(invoke_without_command=True)
 @click.pass_context
@@ -18,7 +17,8 @@ def app(ctx):
 @click.option('--model', default='BAAI/bge-base-en-v1.5', help='Name of the model to use')
 @click.option('--query', default='What is ageing?', help='The query to search for')
 @click.option('--k', default=10, help='Number of search results to return')
-def search(url: str, index: str, device: str, model: str, query: str, k: int):
+@click.option('--verbose', default=False, help='How much to print')
+def search(url: str, index: str, device: str, model: str, query: str, k: int, verbose: bool):
     model_kwargs = {"device": device}
     encode_kwargs = {"normalize_embeddings": True}
 
@@ -33,9 +33,11 @@ def search(url: str, index: str, device: str, model: str, query: str, k: int):
     # Example functionality: Performing a search and printing results
     results = docsearch.similarity_search(query, k=k, search_type = HYBRID_SEARCH, search_pipeline = "norm-pipeline")
 
-    print("Search Results:")
+    print("Search IDS:")
     for result in results:
-        print(result)
+        print(result.metadata["page_id"])
+        if verbose:
+            print(result)
 
 
 @app.command("test_apoe")

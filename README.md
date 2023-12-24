@@ -32,11 +32,19 @@ Open http://localhost:5601/ to explore the dashboard, "admin" is used both as us
 ## Usage:
 - Launch open-search either with docker-compose or java
 - Launch index.py for the initial indexing test dataset. It creates an index and pipeline for hybrid search.
-- Launch search to perform test search.
-```
+- Activate environment
+```bash
 micromamba activate hybrid_search #to activate environment
+pip install -e . #[optional] install current package locally
+```
+- Launch search to perform test search.
+```bash
 python index.py #to index
 python search.py # to search, uses default query
+```
+If you want to use another embedding, for example specter2, try:
+```bash
+python index.py
 ```
 
 ## Tests
