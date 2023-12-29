@@ -1,7 +1,8 @@
 # implementing article https://opensearch.org/blog/hybrid-search/
 import os
+import pprint
 
-from langchain.vectorstores import OpenSearchVectorSearch
+from langchain_community.vectorstores.opensearch_vector_search import OpenSearchVectorSearch
 from langchain_community.vectorstores.opensearch_vector_search import SCRIPT_SCORING_SEARCH
 from langchain_community.vectorstores.opensearch_vector_search import _approximate_search_query_with_boolean_filter
 from langchain_community.vectorstores.opensearch_vector_search import _approximate_search_query_with_efficient_filter
@@ -10,17 +11,36 @@ from langchain_community.vectorstores.opensearch_vector_search import MATCH_ALL_
 from langchain_community.vectorstores.opensearch_vector_search import _default_script_query
 from langchain_community.vectorstores.opensearch_vector_search import PAINLESS_SCRIPTING_SEARCH
 from langchain_community.vectorstores.opensearch_vector_search import _default_painless_scripting_query
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 import warnings
-
+import requests
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
+from opensearchpy import OpenSearch
 from requests import Response
 
 HYBRID_SEARCH = "hybrid_search"
 
 
 class OpenSearchHybridSearch(OpenSearchVectorSearch):
+
+    opensearch_url: str
+    login: str
+    password: str
+    client: OpenSearch
+
+    # Function to check if the pipeline exists
+    def check_pipeline_exists(self, pipeline_id: str = "norm-pipeline"):
+        try:
+            # Attempt to get the pipeline
+            response = self.client.ingest.get_pipeline(id=pipeline_id)
+            if response:
+                print(f"Pipeline '{pipeline_id}' exists.")
+                return True
+        except Exception as e:
+            # If the pipeline does not exist, an exception is thrown
+            print(f"Pipeline '{pipeline_id}' does not exist.")
+            return False
 
     @classmethod
     def create(
@@ -41,7 +61,7 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
         password = os.getenv("OPENSEARCH_PASSWORD", "admin") if password is None else password
         http_auth: tuple[str, str] = (login, password)
         if documents is None or len(documents) == 0:
-            return cls(opensearch_url, index_name, embeddings,
+            result = cls(opensearch_url, index_name, embeddings,
                        http_auth=http_auth,
                        use_ssl=use_ssl,
                        verify_certs=verify_certs,
@@ -49,7 +69,7 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                        ssl_show_warn=ssl_show_warn,
                        **kwargs)
         else:
-            return OpenSearchHybridSearch.from_documents(
+            result = OpenSearchHybridSearch.from_documents(
                 documents, embeddings,
                 opensearch_url=opensearch_url,
                 index_name = index_name,
@@ -60,6 +80,10 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                 ssl_show_warn=ssl_show_warn,
                 **kwargs
             )
+        result.opensearch_url = opensearch_url
+        result.login = login
+        result.password = password
+        return result
 
     @staticmethod
     def _hybrid_search_query(query_vector: List[float], k: int = 4, vector_field: str = "vector_field", query: str = ""):
@@ -82,16 +106,16 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                 }
             }
         }
-
+    """
+    """
     @staticmethod
-    def prepare_pipeline(url: str = "https://localhost:9200",
-                         login: Optional[str] = None,
-                         password: Optional[str] = None,
-                         search_pipeline: str = "norm-pipeline",
-                         normalization: str = "min_max",
-                         combination: str = "arithmetic_mean",
-                         verify: bool =False) -> Response:
-        import requests
+    def create_pipeline(url: str = "https://localhost:9200",
+                        login: Optional[str] = None,
+                        password: Optional[str] = None,
+                        search_pipeline: str = "norm-pipeline",
+                        normalization: str = "min_max",
+                        combination: str = "arithmetic_mean",
+                        verify: bool =False) -> Response:
         login = os.getenv("OPENSEARCH_USER", "admin") if login is None else login
         password = os.getenv("OPENSEARCH_PASSWORD", "admin") if password is None else password
         auth: tuple[str, str] = (login, password)
@@ -121,8 +145,34 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
         # print(r.content)
         return r
 
+
+    def hybrid_search(self, query: str, k: int = 8,
+                      search_pipeline: str = "norm-pipeline",
+                      vector_field: str = "vector_field",
+                      text_field: str = "text",
+                      metadata_field: str = "metadata",
+                      threshold: Optional[float] = None,
+                      **kwargs: Any
+                      ) -> list[tuple[Document, float]]:
+        """
+        Method that already has appropriate pipeline for the search
+        :param query:
+        :param k:
+        :return:
+        """
+
+        results: list[tuple[Document, float]] = self.similarity_search_with_score(query, k=k,
+                                      search_type = HYBRID_SEARCH,
+                                      search_pipeline = search_pipeline,
+                                      vector_field = vector_field,
+                                      text_field = text_field,
+                                      metadata_field = metadata_field,
+                                      **kwargs
+                                      )
+        return results if threshold is None else [(r, f) for (r, f) in results if f >= threshold]
+
     def _raw_similarity_search_with_score(
-        self, query: str, k: int = 4, **kwargs: Any
+        self, query: str, k: int = 8, **kwargs: Any
     ) -> List[dict]:
         """Return raw opensearch documents (dict) including vectors,
         scores most similar to query.
@@ -143,7 +193,7 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
         embedding = self.embedding_function.embed_query(query)
         search_type = kwargs.get("search_type", "approximate_search")
         vector_field = kwargs.get("vector_field", "vector_field")
-        index_name = kwargs.get("index_name", self.index_name) #DO WE NEED IT?
+        index_name = kwargs.get("index_name", self.index_name)
         filter = kwargs.get("filter", {})
 
         if (
@@ -238,6 +288,6 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
         if search_pipeline is not None:
             params["search_pipeline"] = search_pipeline
 
-        response = self.client.search(index=self.index_name, body=search_query, params=params)
-
+        response = self.client.search(index=index_name, body=search_query, params=params)
+        #['total', 'max_score', 'hits']
         return [hit for hit in response["hits"]["hits"]]

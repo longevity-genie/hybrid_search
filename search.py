@@ -1,7 +1,9 @@
+from typing import Optional
+
 import click
 from langchain.embeddings import HuggingFaceBgeEmbeddings
 from langchain.schema import Document
-from hybrid_search.opensearch_hybrid_search import HYBRID_SEARCH
+from hybrid_search.opensearch_hybrid_search import HYBRID_SEARCH, OpenSearchHybridSearch
 from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
 
 @click.group(invoke_without_command=True)
@@ -12,13 +14,15 @@ def app(ctx):
 
 @app.command("search")
 @click.option('--url', default='http://localhost:9200', help='URL of the OpenSearch instance')
-@click.option('--index', default='index_test_rsids_10k', help='Name of the index in OpenSearch')
+@click.option('--index', default='index-bge-test_rsids_10k', help='Name of the index in OpenSearch')
 @click.option('--device', default='cpu', help='Device to run the model on (e.g., cpu, cuda)')
 @click.option('--model', default='BAAI/bge-base-en-v1.5', help='Name of the model to use')
 @click.option('--query', default='What is ageing?', help='The query to search for')
 @click.option('--k', default=10, help='Number of search results to return')
+@click.option('--threshold', default=None, help='Threshold to cut out results')
 @click.option('--verbose', default=False, help='How much to print')
-def search(url: str, index: str, device: str, model: str, query: str, k: int, verbose: bool):
+def search(url: str, index: str, device: str, model: str, query: str, k: int, threshold: Optional[float], verbose: bool):
+    print(f"searching in INDEX: {index}, \nQUERY: {query}")
     model_kwargs = {"device": device}
     encode_kwargs = {"normalize_embeddings": True}
 
@@ -28,14 +32,15 @@ def search(url: str, index: str, device: str, model: str, query: str, k: int, ve
         encode_kwargs=encode_kwargs
     )
 
-    docsearch = OpenSearchHybridSearch.create(url, index, embeddings)
+    docsearch: OpenSearchHybridSearch = OpenSearchHybridSearch.create(url, index, embeddings)
 
     # Example functionality: Performing a search and printing results
-    results = docsearch.similarity_search(query, k=k, search_type = HYBRID_SEARCH, search_pipeline = "norm-pipeline")
-
+    #results = docsearch.similarity_search_with_score(query, k, search_type = HYBRID_SEARCH, search_pipeline = "norm-pipeline")
+    results = docsearch.hybrid_search(query, k, search_pipeline = "norm-pipeline", threshold=threshold)
     print("Search IDS:")
-    for result in results:
-        print(result.metadata["page_id"])
+    for (result, f) in results:
+    #for result in results:
+        print(result.metadata["page_id"], f)
         if verbose:
             print(result)
 
@@ -48,6 +53,18 @@ def test_apoe(ctx):
 @app.command("test_rsids")
 @click.pass_context
 def test_rsids(ctx):
+
+    """
+    :param ctx:
+    :return:
+    In particular for rs123456789 and rs123456788 as well as similar but misspelled rsids are added to the documents:
+        * 10.txt contains both two times
+        * 11.txt contains both one time
+        * 12.txt and 13 contain only one rsid
+        * 20.txt contains both wrong rsids two times
+        * 21.txt contains both wrong rsids one time
+        * 22.txt and 23 contain only one wrong rsid
+    """
     ctx.invoke(search, query="rs123456789 and rs123456788")
 
 
