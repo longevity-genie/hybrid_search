@@ -2,8 +2,8 @@ from typing import List
 
 import click
 from click import Context
-from langchain.document_loaders import DirectoryLoader, TextLoader
-from langchain.embeddings import HuggingFaceBgeEmbeddings, HuggingFaceEmbeddings
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings, HuggingFaceEmbeddings
 from langchain_core.documents import Document
 from pycomfort.logging import timing
 

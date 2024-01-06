@@ -11,10 +11,10 @@ dependencies:
   - pytorch
   - pdfminer.six
   - pydantic
+  - sentence-transformers
   - pip:
       - langchain>=0.0.352
-      - pycomfort>=0.0.13
-      - sentence_transformers
+      - langchain-community>=0.0.9
       - opensearch-py
       - twine
       - adapters
