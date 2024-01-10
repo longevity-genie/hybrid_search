@@ -1,14 +1,18 @@
 from typing import List
 
 import click
+import loguru
 from click import Context
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings, HuggingFaceEmbeddings
 from langchain_core.documents import Document
+from opensearchpy import OpenSearch
+from pycomfort.config import configure_logger, LogLevel, LOG_LEVELS, load_environment_keys
 from pycomfort.logging import timing
-
+from typing import Optional
 from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
-
+import logging
+from opensearchpy import OpenSearch, exceptions
 
 @click.group(invoke_without_command=False)
 @click.pass_context
@@ -20,7 +24,8 @@ def app(ctx: Context):
 
 
 @timing("indexing")
-def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, user: str, password: str, pipeline_name: str, index_name: str, device: str):
+def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, user: str, password: str, pipeline_name: str, index_name: str, device: str, logger: Optional["loguru.Logger"] = None):
+    logger.info(f"indexing from {data_path} using pattern: {glob_pattern} \n using {embedding} with URL {url} \n  USER: {user}  PASSWORD: {password} \n index_name {index_name} ")
     loader = DirectoryLoader(data_path, glob=glob_pattern, loader_cls=TextLoader)
     docs: list[Document] = loader.load()
 
@@ -42,12 +47,14 @@ def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, 
             model_kwargs=model_kwargs,
             encode_kwargs=encode_kwargs
         )
-    docsearch: OpenSearchHybridSearch = OpenSearchHybridSearch.create(url, index_name, embeddings, login=user, password=password, pipeline_name=pipeline_name, documents=docs)
+    logger.info("starting to indexing")
+    docsearch: OpenSearchHybridSearch = OpenSearchHybridSearch.create(url, index_name, embeddings,
+                                                                      login=user, password=password, pipeline_name=pipeline_name, documents=docs)
     # Prepare the pipeline with configurable arguments
     if not docsearch.check_pipeline_exists():
-        print(f"hybrid search pipeline does not exist, creating it for {url}")
+        logger.info(f"hybrid search pipeline does not exist, creating it for {url}")
         docsearch.create_pipeline(url)
-    print(f"Finished indexing with index name {index_name} and embedding {embedding} of data-path {data_path}")
+    logger(f"Finished indexing with index name {index_name} and embedding {embedding} of data-path {data_path}")
 
 # Main CLI command
 @app.command("main")
@@ -60,9 +67,53 @@ def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, 
 @click.option('--pipeline-name', show_default=True, default='norm-pipeline', help='Name of the pipeline.')
 @click.option('--index_name', show_default=True, default='index-test_rsids_10k', help='Name of index')
 @click.option('--device', show_default=True, default='cpu', help='Device to use')
-def main(data_path: str, glob_pattern: str, embedding: str, url: str, user: str, password: str, pipeline_name: str, index_name: str, device: str):
-    index_function(data_path, glob_pattern, embedding, url, user, password, pipeline_name, index_name, device)
+@click.option('--log_level', type=click.Choice(LOG_LEVELS, case_sensitive=False), default=LogLevel.DEBUG.value, help="logging level")
+def main(data_path: str, glob_pattern: str, embedding: str, url: str, user: str, password: str, pipeline_name: str, index_name: str, device: str, log_level: str):
+    logger = configure_logger(log_level)
+    logger.add("./logs/hybrid_index_{time}.log")
+    load_environment_keys(usecwd=True)
+    return index_function(data_path, glob_pattern, embedding, url, user, password, pipeline_name, index_name, device, logger)
 
+
+@app.command("test_connection")
+@click.option('--url', default='http://agingkills.eu:9200', help='URL of the OpenSearch cluster')
+@click.option('--username', default='admin', help='Username for the OpenSearch cluster')
+@click.option('--password', default='admin', help='Password for the OpenSearch cluster')
+@click.option('--use-ssl', default=True, type=bool, help='Use SSL for connection')
+@click.option('--ssl-show-warn', default=False, type=bool, help='Show SSL warnings')
+def test_opensearch(url: str, username: str, password: str, use_ssl: bool, ssl_show_warn: bool):
+    """ Connects to OpenSearch and adds a test index with test data. """
+    # Configure logging
+    logging.basicConfig(level=logging.DEBUG)
+    logging.getLogger('opensearchpy').setLevel(logging.DEBUG)
+    """ Connects to OpenSearch and adds a test index with test data. """
+    try:
+        # Initialize the OpenSearch client
+        client = OpenSearch(
+            hosts=[url],
+            http_auth=(username, password),
+            use_ssl=use_ssl,
+            verify_certs=False,
+            ssl_assert_hostname=False,
+            ssl_show_warn=ssl_show_warn
+        )
+
+        # Create a test index
+        index_name = 'test_index'
+        client.indices.create(index=index_name, ignore=400)
+
+        # Add test data
+        test_data = {"name": "Test Name", "description": "This is a test entry."}
+        response = client.index(index=index_name, body=test_data)
+
+        # Print success message
+        if response.get('result') in ['created', 'updated']:
+            click.echo("Test data added successfully!")
+        else:
+            click.echo("Failed to add test data.")
+
+    except exceptions.OpenSearchException as e:
+        click.echo(f"Error interacting with OpenSearch: {e}")
 
 @app.command("bge")
 @click.pass_context
