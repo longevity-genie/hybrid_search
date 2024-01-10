@@ -42,9 +42,15 @@ pip install -e . #[optional] install current package locally
 python index.py #to index
 python search.py # to search, uses default query
 ```
+You can also tune index.py parameters. For example:
+```
+python index.py main --url https://agingkills.eu:9200 --user admin --password admin --index_name index-bge-test_rsids_10k --embedding BAAI/bge-base-en-v1.5
+
+```
+
 If you want to use another embedding, for example specter2, try:
 ```bash
-python index.py
+python index.py specter2
 ```
 
 ## Tests
