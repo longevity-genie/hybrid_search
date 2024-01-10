@@ -16,7 +16,7 @@ import warnings
 import requests
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
-from opensearchpy import OpenSearch
+from opensearchpy import OpenSearch, RequestsHttpConnection
 from requests import Response
 
 HYBRID_SEARCH = "hybrid_search"
@@ -67,6 +67,8 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                        verify_certs=verify_certs,
                        ssl_assert_hostname=ssl_assert_hostname,
                        ssl_show_warn=ssl_show_warn,
+                       trust_env=True,
+                       connection_class=RequestsHttpConnection,
                        **kwargs)
         else:
             result = OpenSearchHybridSearch.from_documents(
@@ -78,6 +80,8 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                 verify_certs=verify_certs,
                 ssl_assert_hostname=ssl_assert_hostname,
                 ssl_show_warn=ssl_show_warn,
+                trust_env=True,
+                connection_class=RequestsHttpConnection,
                 **kwargs
             )
         result.opensearch_url = opensearch_url

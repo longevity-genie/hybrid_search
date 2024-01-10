@@ -6,13 +6,14 @@ from click import Context
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings, HuggingFaceEmbeddings
 from langchain_core.documents import Document
-from opensearchpy import OpenSearch
+from opensearchpy import OpenSearch, RequestsHttpConnection
 from pycomfort.config import configure_logger, LogLevel, LOG_LEVELS, load_environment_keys
 from pycomfort.logging import timing
 from typing import Optional
 from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
 import logging
 from opensearchpy import OpenSearch, exceptions
+from opensearchpy import OpenSearch, RequestsHttpConnection
 
 @click.group(invoke_without_command=False)
 @click.pass_context
@@ -95,7 +96,9 @@ def test_opensearch(url: str, username: str, password: str, use_ssl: bool, ssl_s
             use_ssl=use_ssl,
             verify_certs=False,
             ssl_assert_hostname=False,
-            ssl_show_warn=ssl_show_warn
+            ssl_show_warn=ssl_show_warn,
+            connection_class=RequestsHttpConnection,
+            trust_env=True
         )
 
         # Create a test index
