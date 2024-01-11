@@ -55,7 +55,7 @@ def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, 
     if not docsearch.check_pipeline_exists():
         logger.info(f"hybrid search pipeline does not exist, creating it for {url}")
         docsearch.create_pipeline(url)
-    logger(f"Finished indexing with index name {index_name} and embedding {embedding} of data-path {data_path}")
+    logger.info(f"Finished indexing with index name {index_name} and embedding {embedding} of data-path {data_path}")
 
 # Main CLI command
 @app.command("main")
@@ -66,7 +66,7 @@ def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, 
 @click.option('--user', show_default=True, default='admin', help='Username for the pipeline.')
 @click.option('--password', show_default=True, default='admin', help='Password for the pipeline.')
 @click.option('--pipeline-name', show_default=True, default='norm-pipeline', help='Name of the pipeline.')
-@click.option('--index_name', show_default=True, default='index-test_rsids_10k', help='Name of index')
+@click.option('--index_name', show_default=True, default='index-bge-test_rsids_10k', help='Name of index')
 @click.option('--device', show_default=True, default='cpu', help='Device to use')
 @click.option('--log_level', type=click.Choice(LOG_LEVELS, case_sensitive=False), default=LogLevel.DEBUG.value, help="logging level")
 def main(data_path: str, glob_pattern: str, embedding: str, url: str, user: str, password: str, pipeline_name: str, index_name: str, device: str, log_level: str):
