@@ -77,7 +77,7 @@ def main(data_path: str, glob_pattern: str, embedding: str, url: str, user: str,
 
 
 @app.command("test_connection")
-@click.option('--url', default='http://agingkills.eu:9200', help='URL of the OpenSearch cluster')
+@click.option('--url', default='https://localhost:9200', help='URL of the OpenSearch cluster')
 @click.option('--username', default='admin', help='Username for the OpenSearch cluster')
 @click.option('--password', default='admin', help='Password for the OpenSearch cluster')
 @click.option('--use-ssl', default=True, type=bool, help='Use SSL for connection')
@@ -117,6 +117,40 @@ def test_opensearch(url: str, username: str, password: str, use_ssl: bool, ssl_s
 
     except exceptions.OpenSearchException as e:
         click.echo(f"Error interacting with OpenSearch: {e}")
+
+    @app.command("delete_index")
+    @click.option('--url', default='https://localhost:9200', help='URL of the OpenSearch cluster')
+    @click.option('--username', default='admin', help='Username for the OpenSearch cluster')
+    @click.option('--password', default='admin', help='Password for the OpenSearch cluster')
+    @click.option('--use-ssl', default=True, type=bool, help='Use SSL for connection')
+    @click.option('--ssl-show-warn', default=False, type=bool, help='Show SSL warnings')
+    @click.option('--index-name', default='test_index', help='Name of the index to be deleted')
+    def delete_index(url: str, username: str, password: str, use_ssl: bool, ssl_show_warn: bool, index_name: str):
+        """ Deletes a specified index from the OpenSearch cluster. """
+        try:
+            # Initialize the OpenSearch client
+            client = OpenSearch(
+                hosts=[url],
+                http_auth=(username, password),
+                use_ssl=use_ssl,
+                verify_certs=False,
+                ssl_assert_hostname=False,
+                ssl_show_warn=ssl_show_warn,
+                connection_class=RequestsHttpConnection,
+                trust_env=True
+            )
+
+            # Delete the specified index
+            response = client.indices.delete(index=index_name, ignore=[400, 404])
+
+            # Print success message
+            if response.get('acknowledged', False):
+                click.echo(f"Index '{index_name}' deleted successfully.")
+            else:
+                click.echo(f"Index '{index_name}' was not found or could not be deleted.")
+
+        except exceptions.OpenSearchException as e:
+            click.echo(f"Error interacting with OpenSearch: {e}")
 
 @app.command("bge")
 @click.pass_context

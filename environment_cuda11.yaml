@@ -1,4 +1,4 @@
-name: hybrid_search
+name: hybrid_search_cuda11 #for outdated cuda
 channels:
   - conda-forge
   - pytorch
@@ -6,8 +6,8 @@ channels:
 dependencies:
   - python=3.10
   - setuptools
-  - pydantic
-  - pytorch
+  - cudatoolkit=11.6
+  - pytorch<=1.13
   - sentence-transformers
   - pip:
       - langchain>=0.1.0

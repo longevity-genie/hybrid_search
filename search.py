@@ -13,7 +13,7 @@ def app(ctx):
         ctx.invoke(search)
 
 @app.command("search")
-@click.option('--url', default='http://localhost:9200', help='URL of the OpenSearch instance')
+@click.option('--url', default='https://localhost:9200', help='URL of the OpenSearch instance')
 @click.option('--index', default='index-bge-test_rsids_10k', help='Name of the index in OpenSearch')
 @click.option('--device', default='cpu', help='Device to run the model on (e.g., cpu, cuda)')
 @click.option('--model', default='BAAI/bge-base-en-v1.5', help='Name of the model to use')

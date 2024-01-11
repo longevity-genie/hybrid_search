@@ -29,6 +29,9 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
     password: str
     client: OpenSearch
 
+    def delete_index(self, index_name: str):
+        return self.client.indices.delete(index=index_name, ignore=[400, 404])
+
     # Function to check if the pipeline exists
     def check_pipeline_exists(self, pipeline_id: str = "norm-pipeline"):
         try:
