@@ -9,11 +9,14 @@ dependencies:
   - cudatoolkit=11.6
   - pytorch<=1.13
   - sentence-transformers
+  - jupyter
   - pip:
-      - langchain>=0.1.0
-      - langchain-community>=0.0.11
+      - langchain>=0.1.5
+      - langchain-community>=0.0.17
       - opensearch-py>=2.4.2
       - twine
       - adapters
       - pycomfort>=0.0.15
       - psutil #some weird dependency
+      - pyvespa
+      - FlagEmbedding

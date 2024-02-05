@@ -11,15 +11,32 @@ from langchain_community.vectorstores.opensearch_vector_search import MATCH_ALL_
 from langchain_community.vectorstores.opensearch_vector_search import _default_script_query
 from langchain_community.vectorstores.opensearch_vector_search import PAINLESS_SCRIPTING_SEARCH
 from langchain_community.vectorstores.opensearch_vector_search import _default_painless_scripting_query
+
+from FlagEmbedding import FlagReranker
 from typing import Any, List, Optional, Tuple
 import warnings
 import requests
+
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from requests import Response
 
 HYBRID_SEARCH = "hybrid_search"
+
+def rerank_results(query: str, documents: list[Document], reranker: Optional[FlagReranker] = None) -> list[(str, Document)]:
+    """reranks the resulting documents"""
+    reranker = FlagReranker('BAAI/bge-reranker-large', use_fp16=True) if reranker is None else reranker
+    sentences = [(query, d.page_content) for d in documents]
+    ranks = reranker.compute_score(sentences)
+    return list(zip(documents, ranks))
+
+def rerank_extend_results(query: str, documents: list[(Document, float)], reranker: Optional[FlagReranker] = None) -> list[(str, Document)]:
+    """reranks the resulting documents"""
+    reranker = FlagReranker('BAAI/bge-reranker-large', use_fp16=True) if reranker is None else reranker
+    sentences = [(query, d[0].page_content) for d in documents]
+    ranks = reranker.compute_score(sentences)
+    return [(documents[i][0], documents[i][1], ranks[i]) for i in range(0, len(documents))]
 
 
 class OpenSearchHybridSearch(OpenSearchVectorSearch):
@@ -28,6 +45,9 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
     login: str
     password: str
     client: OpenSearch
+    with_reranker: bool = False
+    reranker: Optional[FlagReranker] = None
+
 
     def delete_index(self, index_name: str):
         return self.client.indices.delete(index=index_name, ignore=[400, 404])
@@ -58,6 +78,9 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
             ssl_assert_hostname: bool = False,
             ssl_show_warn: bool = False,
             documents: Optional[list[Document]] = None,
+            space_type: str = "cosinesimil", #"l2"
+            engine: str = "nmslib",
+            with_reranker: bool = False,
             **kwargs: Any,
     ) -> 'OpenSearchHybridSearch':
         login = os.getenv("OPENSEARCH_USER", "admin") if login is None else login
@@ -72,6 +95,8 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                        ssl_show_warn=ssl_show_warn,
                        trust_env=True,
                        connection_class=RequestsHttpConnection,
+                       space_type=space_type,
+                       engine = engine,
                        **kwargs)
         else:
             result = OpenSearchHybridSearch.from_documents(
@@ -85,11 +110,16 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                 ssl_show_warn=ssl_show_warn,
                 trust_env=True,
                 connection_class=RequestsHttpConnection,
+                space_type=space_type,
+                engine = engine,
                 **kwargs
             )
         result.opensearch_url = opensearch_url
         result.login = login
         result.password = password
+        result.with_reranker = with_reranker
+        if result.with_reranker:
+            result.reranker = FlagReranker('BAAI/bge-reranker-large', use_fp16=True)
         return result
 
     @staticmethod
@@ -176,7 +206,8 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                                       metadata_field = metadata_field,
                                       **kwargs
                                       )
-        return results if threshold is None else [(r, f) for (r, f) in results if f >= threshold]
+        upd_results = results if threshold is None else [(r, f) for (r, f) in results if f >= threshold]
+        return upd_results
 
     def _raw_similarity_search_with_score(
         self, query: str, k: int = 8, **kwargs: Any

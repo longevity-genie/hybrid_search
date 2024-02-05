@@ -10,12 +10,14 @@ from opensearchpy import OpenSearch, RequestsHttpConnection
 from pycomfort.config import configure_logger, LogLevel, LOG_LEVELS, load_environment_keys
 from pycomfort.logging import timing
 from typing import Optional
+from FlagEmbedding import BGEM3FlagModel
+from hybrid_search.novel_embeddings import BgeM3Embeddings
 from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
 import logging
 from opensearchpy import OpenSearch, exceptions
 from opensearchpy import OpenSearch, RequestsHttpConnection
 
-@click.group(invoke_without_command=False)
+@click.group(invoke_without_command=True)
 @click.pass_context
 def app(ctx: Context):
     if ctx.invoked_subcommand is None:
@@ -25,7 +27,7 @@ def app(ctx: Context):
 
 
 @timing("indexing")
-def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, user: str, password: str, pipeline_name: str, index_name: str, device: str, logger: Optional["loguru.Logger"] = None):
+def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, user: str, password: str, pipeline_name: str, index_name: str, device: str, space: str, logger: Optional["loguru.Logger"] = None):
     logger.info(f"indexing from {data_path} using pattern: {glob_pattern} \n using {embedding} with URL {url} \n  USER: {user}  PASSWORD: {password} \n index_name {index_name} ")
     loader = DirectoryLoader(data_path, glob=glob_pattern, loader_cls=TextLoader)
     docs: list[Document] = loader.load()
@@ -36,7 +38,9 @@ def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, 
     model_kwargs = {"device": device}
     encode_kwargs = {"normalize_embeddings": True}
 
-    if "bge" in embedding:
+    if "bge-m3" in embedding:
+        embeddings = BgeM3Embeddings(use_fp16=True, device=device)
+    elif "bge" in embedding:
         embeddings = HuggingFaceBgeEmbeddings(
             model_name=embedding,
             model_kwargs=model_kwargs,
@@ -50,30 +54,37 @@ def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, 
         )
     logger.info("starting to indexing")
     docsearch: OpenSearchHybridSearch = OpenSearchHybridSearch.create(url, index_name, embeddings,
-                                                                      login=user, password=password, pipeline_name=pipeline_name, documents=docs)
+                                                                      login=user, password=password,
+                                                                      pipeline_name=pipeline_name,
+                                                                      documents=docs,
+                                                                      space_type=space
+                                                                      )
     # Prepare the pipeline with configurable arguments
     if not docsearch.check_pipeline_exists():
         logger.info(f"hybrid search pipeline does not exist, creating it for {url}")
         docsearch.create_pipeline(url)
     logger.info(f"Finished indexing with index name {index_name} and embedding {embedding} of data-path {data_path}")
 
+
 # Main CLI command
 @app.command("main")
 @click.option('--data-path', show_default=True, default='data/tacutopapers_test_rsids_10k/', help='Path to the data directory.')
 @click.option('--glob-pattern', show_default=True, default='*.txt', help='Glob pattern for files.')
-@click.option('--embedding', show_default=True, default='BAAI/bge-base-en-v1.5', help='Type of embedding to use.') #can also be allenai/specter2_aug2023refresh
+@click.option('--embedding', show_default=True, default='BAAI/bge-m3', help='Type of embedding to use.') #can also be allenai/specter2_aug2023refresh
 @click.option('--url', show_default=True, default='https://localhost:9200', help='URL for the pipeline.')
 @click.option('--user', show_default=True, default='admin', help='Username for the pipeline.')
 @click.option('--password', show_default=True, default='admin', help='Password for the pipeline.')
 @click.option('--pipeline-name', show_default=True, default='norm-pipeline', help='Name of the pipeline.')
 @click.option('--index_name', show_default=True, default='index-bge-test_rsids_10k', help='Name of index')
+@click.option('--index_name', show_default=True, default='index-bge-test_rsids_10k', help='Name of index')
 @click.option('--device', show_default=True, default='cpu', help='Device to use')
+@click.option('--space', type=click.Choice(["cosinesimil", "l2", "innerproduct", "l1", "linf"], False), default='l2', help='Space to use for OpenSearch')
 @click.option('--log_level', type=click.Choice(LOG_LEVELS, case_sensitive=False), default=LogLevel.DEBUG.value, help="logging level")
-def main(data_path: str, glob_pattern: str, embedding: str, url: str, user: str, password: str, pipeline_name: str, index_name: str, device: str, log_level: str):
+def main(data_path: str, glob_pattern: str, embedding: str, url: str, user: str, password: str, pipeline_name: str, index_name: str, device: str, space: str, log_level: str):
     logger = configure_logger(log_level)
     logger.add("./logs/hybrid_index_{time}.log")
     load_environment_keys(usecwd=True)
-    return index_function(data_path, glob_pattern, embedding, url, user, password, pipeline_name, index_name, device, logger)
+    return index_function(data_path, glob_pattern, embedding, url, user, password, pipeline_name, index_name, device, space, logger)
 
 
 @app.command("test_connection")
@@ -156,7 +167,7 @@ def test_opensearch(url: str, username: str, password: str, use_ssl: bool, ssl_s
 @click.pass_context
 def bge_command(ctx, *args, **kwargs):
     # You can set default values for any option you want to override
-    kwargs['embedding'] = 'BAAI/bge-base-en-v1.5'
+    kwargs['embedding'] = 'BAAI/bge-m3' #'BAAI/bge-base-en-v1.5'
     if 'index_name' not in kwargs:
         index_name = "index-bge-test_rsids_10k"
         print(f"no index name set, setting up default as {index_name}")

@@ -1,0 +1,55 @@
+Current results from.
+
+With cosine distance and bge_large:
+
+python search.py test_heroes
+
+len results 10
+Search IDS:
+114 0.5
+30 0.039743133
+65 0.035737693
+11 0.03460039
+104 0.022760613
+112 0.015720053
+93 0.006348559
+70 0.002783485
+21 0.0010299323
+22 0.0005
+
+python search test_rsids
+
+QUERY: rs123456789 and rs123456788
+
+13 0.64123917
+68 0.5
+10 0.5
+11 0.3500036
+34 0.24764778
+12 0.18144736
+55 0.16849868
+78 0.14669268
+67 0.1428922
+112 0.044543076
+
+* 10.txt contains both two times
+* 11.txt contains both one time
+* 12.txt and 13 contain only one rsid
+* 20.txt contains both wrong rsids two times
+* 21.txt contains both wrong rsids one time
+* 22.txt and 23 contain only one wrong rsid
+
+
+=============================
+bge-m3
+
+13 0.62161505
+10 0.5
+21 0.5
+11 0.3500036
+43 0.31708866
+44 0.30623257
+67 0.2958688
+68 0.24327041
+45 0.2406072
+66 0.20606163

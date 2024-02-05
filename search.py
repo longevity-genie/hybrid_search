@@ -3,7 +3,8 @@ from typing import Optional
 import click
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 
-from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
+from hybrid_search.novel_embeddings import BgeM3Embeddings
+from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch, rerank_results, rerank_extend_results
 
 
 @click.group(invoke_without_command=True)
@@ -16,31 +17,35 @@ def app(ctx):
 @click.option('--url', default='https://localhost:9200', help='URL of the OpenSearch instance')
 @click.option('--index', default='index-bge-test_rsids_10k', help='Name of the index in OpenSearch')
 @click.option('--device', default='cpu', help='Device to run the model on (e.g., cpu, cuda)')
-@click.option('--model', default='BAAI/bge-base-en-v1.5', help='Name of the model to use')
+@click.option('--embedding', default='BAAI/bge-m3', help='Name of the model to use') # BAAI/bge-m3
 @click.option('--query', default='What is ageing?', help='The query to search for')
 @click.option('--k', default=10, help='Number of search results to return')
 @click.option('--threshold', default=None, help='Threshold to cut out results')
 @click.option('--verbose', default=False, help='How much to print')
-def search(url: str, index: str, device: str, model: str, query: str, k: int, threshold: Optional[float], verbose: bool):
+def search(url: str, index: str, device: str, embedding: str, query: str, k: int, threshold: Optional[float], verbose: bool):
     print(f"searching in INDEX: {index}, \nQUERY: {query}")
     model_kwargs = {"device": device}
     encode_kwargs = {"normalize_embeddings": True}
-
-    embeddings = HuggingFaceBgeEmbeddings(
-        model_name=model,
-        model_kwargs=model_kwargs,
-        encode_kwargs=encode_kwargs
-    )
+    if "bge-m3" in embedding:
+        embeddings = BgeM3Embeddings(use_fp16=True, device=device)
+    else:
+        embeddings = HuggingFaceBgeEmbeddings(
+            model_name=embedding,
+            model_kwargs=model_kwargs,
+            encode_kwargs=encode_kwargs
+        )
 
     docsearch: OpenSearchHybridSearch = OpenSearchHybridSearch.create(url, index, embeddings)
 
     # Example functionality: Performing a search and printing results
     #results = docsearch.similarity_search_with_score(query, k, search_type = HYBRID_SEARCH, search_pipeline = "norm-pipeline")
-    results = docsearch.hybrid_search(query, k, search_pipeline = "norm-pipeline", threshold=threshold)
+    found = docsearch.hybrid_search(query, k, search_pipeline = "norm-pipeline", threshold=threshold)
+    print(f"len results {len(found)}")
+    results = rerank_extend_results(query, found)
     print("Search IDS:")
-    for (result, f) in results:
-    #for result in results:
-        print(result.metadata["page_id"], f)
+    for (result, f, f2) in results:
+        if "page_id" in result.metadata:
+            print(result.metadata["page_id"], f, f2)
         if verbose:
             print(result)
 

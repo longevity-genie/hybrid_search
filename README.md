@@ -55,6 +55,8 @@ python index.py specter2
 
 ## Tests
 
+### RSID test
+
 There are text pieces deliberately incorporated into tacutu papers data ( /data/tacutopapers_test_rsids_10k )
 In particular for rs123456789 and rs123456788 as well as similar but misspelled rsids are added to the documents:
 * 10.txt contains both two times
@@ -66,15 +68,17 @@ In particular for rs123456789 and rs123456788 as well as similar but misspelled 
 
 You can test them by:
 ```
-python search test_rsids
+python search.py test_rsids
 ```
+
+### Comics superheroes test
 
 Also, similar test for "Comics superheroes" that will test embeddings:
 * Only 114 document has text about superheroes, but text did not contain words 'comics' or 'superheroes'
 
 You can test them by:
 ```
-python search test_heroes
+python search.py test_heroes
 ```
 
 Right now testing is not automated and you have to call CLI to test
