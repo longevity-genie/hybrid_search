@@ -19,4 +19,5 @@ dependencies:
       - pycomfort>=0.0.15
       - psutil #some weird dependency
       - pyvespa
+      - transformers>=4.35.2
       - FlagEmbedding
