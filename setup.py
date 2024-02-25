@@ -7,7 +7,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
-VERSION = '0.0.8'
+VERSION = '0.0.9'
 DESCRIPTION = 'Hybrid search with OpenSearch and Langchain'
 LONG_DESCRIPTION = 'Package for the hybrid search with opensearch and langchain library'
 
