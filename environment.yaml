@@ -11,7 +11,7 @@ dependencies:
   - sentence-transformers
   - jupyter
   - pip:
-      - langchain>=0.1.9
+      - langchain>=0.1.11
       - langchain_community>=0.0.22
       - opensearch-py>=2.4.2
       - twine
