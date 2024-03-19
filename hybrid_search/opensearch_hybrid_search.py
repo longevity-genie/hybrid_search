@@ -48,7 +48,6 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
     with_reranker: bool = False
     reranker: Optional[FlagReranker] = None
 
-
     def delete_index(self, index_name: str):
         return self.client.indices.delete(index=index_name, ignore=[400, 404])
 

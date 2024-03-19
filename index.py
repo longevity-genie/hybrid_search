@@ -70,7 +70,7 @@ def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, 
 @app.command("main")
 @click.option('--data-path', show_default=True, default='data/tacutopapers_test_rsids_10k/', help='Path to the data directory.')
 @click.option('--glob-pattern', show_default=True, default='*.txt', help='Glob pattern for files.')
-@click.option('--embedding', show_default=True, default='BAAI/bge-m3', help='Type of embedding to use.') #can also be allenai/specter2_aug2023refresh
+@click.option('--embedding', show_default=True, default='BAAI/bge-large-en-v1.5', help='Type of embedding to use.') #can also be allenai/specter2_aug2023refresh
 @click.option('--url', show_default=True, default='https://localhost:9200', help='URL for the pipeline.')
 @click.option('--user', show_default=True, default='admin', help='Username for the pipeline.')
 @click.option('--password', show_default=True, default='admin', help='Password for the pipeline.')
@@ -167,7 +167,7 @@ def test_opensearch(url: str, username: str, password: str, use_ssl: bool, ssl_s
 @click.pass_context
 def bge_command(ctx, *args, **kwargs):
     # You can set default values for any option you want to override
-    kwargs['embedding'] = 'BAAI/bge-m3' #'BAAI/bge-base-en-v1.5'
+    kwargs['embedding'] = 'BAAI/bge-large-en-v1.5' #'BAAI/bge-base-en-v1.5'
     if 'index_name' not in kwargs:
         index_name = "index-bge-test_rsids_10k"
         print(f"no index name set, setting up default as {index_name}")
