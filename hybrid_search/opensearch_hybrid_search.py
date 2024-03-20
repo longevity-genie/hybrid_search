@@ -97,7 +97,7 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                        connection_class=RequestsHttpConnection,
                        space_type=space_type,
                        engine = engine,
-                       timeout = timeout
+                       timeout = timeout,
                        **kwargs)
         else:
             result = OpenSearchHybridSearch.from_documents(
