@@ -61,7 +61,7 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                 return True
         except Exception as e:
             # If the pipeline does not exist, an exception is thrown
-            print(f"Pipeline '{pipeline_id}' does not exist.")
+            print(f"Pipeline '{pipeline_id}' does not exist. Exception was {str(e) if e is not None else ''}.")
             return False
 
     @classmethod
@@ -80,6 +80,7 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
             space_type: str = "cosinesimil", #"l2"
             engine: str = "nmslib",
             with_reranker: bool = False,
+            timeout: int = 120,
             **kwargs: Any,
     ) -> 'OpenSearchHybridSearch':
         login = os.getenv("OPENSEARCH_USER", "admin") if login is None else login
@@ -96,6 +97,7 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                        connection_class=RequestsHttpConnection,
                        space_type=space_type,
                        engine = engine,
+                       timeout = timeout
                        **kwargs)
         else:
             result = OpenSearchHybridSearch.from_documents(
@@ -111,6 +113,7 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                 connection_class=RequestsHttpConnection,
                 space_type=space_type,
                 engine = engine,
+                timeout = timeout, #lets make it large
                 **kwargs
             )
         result.opensearch_url = opensearch_url
