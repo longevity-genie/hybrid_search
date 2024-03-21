@@ -199,47 +199,47 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
         :param k:
         :return:
         """
-
         results: list[tuple[Document, float]] = self.similarity_search_with_score(query, k=k,
                                       search_type = HYBRID_SEARCH,
                                       search_pipeline = search_pipeline,
                                       vector_field = vector_field,
                                       text_field = text_field,
                                       metadata_field = metadata_field,
+                                      hybrid_query = query,
                                       **kwargs
                                       )
         upd_results = results if threshold is None else [(r, f) for (r, f) in results if f >= threshold]
         return upd_results
 
-    def _raw_similarity_search_with_score(
-        self, query: str, k: int = 8, **kwargs: Any
+
+    def _raw_similarity_search_with_score_by_vector(
+            self, embedding: List[float], k: int = 4, **kwargs: Any
     ) -> List[dict]:
         """Return raw opensearch documents (dict) including vectors,
-        scores most similar to query.
+        scores most similar to the embedding vector.
 
         By default, supports Approximate Search.
         Also supports Script Scoring and Painless Scripting.
 
         Args:
-            query: Text to look up documents similar to.
+            embedding: Embedding vector to look up documents similar to.
             k: Number of Documents to return. Defaults to 4.
 
         Returns:
-            List of dict with its scores most similar to the query.
+            List of dict with its scores most similar to the embedding.
 
         Optional Args:
             same as `similarity_search`
         """
-        embedding = self.embedding_function.embed_query(query)
         search_type = kwargs.get("search_type", "approximate_search")
         vector_field = kwargs.get("vector_field", "vector_field")
         index_name = kwargs.get("index_name", self.index_name)
         filter = kwargs.get("filter", {})
 
         if (
-            self.is_aoss
-            and search_type != "approximate_search"
-            and search_type != SCRIPT_SCORING_SEARCH
+                self.is_aoss
+                and search_type != "approximate_search"
+                and search_type != SCRIPT_SCORING_SEARCH
         ):
             raise ValueError(
                 "Amazon OpenSearch Service Serverless only "
@@ -272,10 +272,10 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                 )
 
             if (
-                efficient_filter == {}
-                and boolean_filter == {}
-                and lucene_filter == {}
-                and filter != {}
+                    efficient_filter == {}
+                    and boolean_filter == {}
+                    and lucene_filter == {}
+                    and filter != {}
             ):
                 if self.engine in ["faiss", "lucene"]:
                     efficient_filter = filter
@@ -319,14 +319,20 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
                 embedding, k, space_type, pre_filter, vector_field
             )
         elif search_type == HYBRID_SEARCH:
-            search_query = self._hybrid_search_query(embedding, k=k, vector_field=vector_field, query=query)
+            hybrid_query = kwargs.get("hybrid_query", "")
+            if hybrid_query == "":
+                print("Warning!!! Use hybrid_search() method or add hybrid_query parameter along with query parameter with same value.")
+            search_query = self._hybrid_search_query(embedding, k=k, vector_field=vector_field, query=hybrid_query)
         else:
             raise ValueError("Invalid `search_type` provided as an argument")
 
         search_pipeline = kwargs.get("search_pipeline", None)
+        timeout = kwargs.get("timeout", None)
         params = {}
         if search_pipeline is not None:
             params["search_pipeline"] = search_pipeline
+        if timeout is not None:
+            params["timeout"] = timeout
 
         response = self.client.search(index=index_name, body=search_query, params=params)
         #['total', 'max_score', 'hits']

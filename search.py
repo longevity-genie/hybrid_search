@@ -17,7 +17,7 @@ def app(ctx):
 @click.option('--url', default='https://localhost:9200', help='URL of the OpenSearch instance')
 @click.option('--index', default='index-bge-test_rsids_10k', help='Name of the index in OpenSearch')
 @click.option('--device', default='cpu', help='Device to run the model on (e.g., cpu, cuda)')
-@click.option('--embedding', default='BAAI/bge-m3', help='Name of the model to use') # BAAI/bge-m3
+@click.option('--embedding', default='BAAI/bge-large-en-v1.5', help='Name of the model to use') # BAAI/bge-m3
 @click.option('--query', default='What is ageing?', help='The query to search for')
 @click.option('--k', default=10, help='Number of search results to return')
 @click.option('--threshold', default=None, help='Threshold to cut out results')
@@ -39,7 +39,7 @@ def search(url: str, index: str, device: str, embedding: str, query: str, k: int
 
     # Example functionality: Performing a search and printing results
     #results = docsearch.similarity_search_with_score(query, k, search_type = HYBRID_SEARCH, search_pipeline = "norm-pipeline")
-    found = docsearch.hybrid_search(query, k, search_pipeline = "norm-pipeline", threshold=threshold)
+    found = docsearch.hybrid_search(query, k, search_pipeline = "norm-pipeline", threshold=threshold, timeout=100)
     print(f"len results {len(found)}")
     results = rerank_extend_results(query, found)
     print("Search IDS:")

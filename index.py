@@ -76,7 +76,6 @@ def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, 
 @click.option('--password', show_default=True, default='admin', help='Password for the pipeline.')
 @click.option('--pipeline-name', show_default=True, default='norm-pipeline', help='Name of the pipeline.')
 @click.option('--index_name', show_default=True, default='index-bge-test_rsids_10k', help='Name of index')
-@click.option('--index_name', show_default=True, default='index-bge-test_rsids_10k', help='Name of index')
 @click.option('--device', show_default=True, default='cpu', help='Device to use')
 @click.option('--space', type=click.Choice(["cosinesimil", "l2", "innerproduct", "l1", "linf"], False), default='l2', help='Space to use for OpenSearch')
 @click.option('--log_level', type=click.Choice(LOG_LEVELS, case_sensitive=False), default=LogLevel.DEBUG.value, help="logging level")
