@@ -21,7 +21,7 @@ setup(
     long_description_content_type="text/markdown",
     long_description=long_description,
     packages=find_packages(),
-    install_requires=['pycomfort>=0.0.15', 'click','transformers>=4.35.2', "sentence_transformers", "opensearch-py>=2.4.2", "langchain>=0.1.12", "langchain-community>=0.0.28"],
+    install_requires=['pycomfort>=0.0.15', 'click','transformers>=4.35.2', "sentence_transformers", "opensearch-py>=2.6.0", "langchain>=0.2.11", "langchain-community>=0.2.10"],
     keywords=['python', 'llm', 'science', 'review', 'hybrid search', 'semantic search'],
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",

@@ -4,20 +4,19 @@ channels:
   - pytorch
   - defaults
 dependencies:
-  - python=3.10
+  - python=3.11
   - setuptools
   - pydantic
   - pytorch
   - sentence-transformers
   - jupyter
   - pip:
-      - langchain>=0.1.12
-      - langchain_community>=0.0.28
-      - opensearch-py>=2.4.2
+      - langchain>=0.2.11
+      - langchain_community>=0.2.10
+      - opensearch-py>=2.6.0
       - twine
       - adapters
       - pycomfort>=0.0.15
       - psutil #some weird dependency
-      - pyvespa
       - transformers>=4.35.2
-      - FlagEmbedding
+      - FlagEmbedding>=1.2.10
