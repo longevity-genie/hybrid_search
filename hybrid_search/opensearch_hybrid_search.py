@@ -22,7 +22,7 @@ from langchain_core.embeddings import Embeddings
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from requests import Response
 
-HYBRID_SEARCH = "script_scoring" #"hybrid_search"
+HYBRID_SEARCH = "hybrid_search"
 
 def rerank_results(query: str, documents: list[Document], reranker: Optional[FlagReranker] = None) -> list[(str, Document)]:
     """reranks the resulting documents"""
@@ -213,7 +213,7 @@ class OpenSearchHybridSearch(OpenSearchVectorSearch):
 
 
     def _raw_similarity_search_with_score_by_vector(
-            self, embedding: List[float], k: int = 4, **kwargs: Any
+            self, embedding: List[float], k: int = 8, **kwargs: Any
     ) -> List[dict]:
         """Return raw opensearch documents (dict) including vectors,
         scores most similar to the embedding vector.

@@ -2,7 +2,7 @@ from typing import Optional
 
 import click
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
-
+from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from hybrid_search.novel_embeddings import BgeM3Embeddings
 from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch, rerank_results, rerank_extend_results
 
@@ -24,12 +24,18 @@ def app(ctx):
 @click.option('--verbose', default=False, help='How much to print')
 def search(url: str, index: str, device: str, embedding: str, query: str, k: int, threshold: Optional[float], verbose: bool):
     print(f"searching in INDEX: {index}, \nQUERY: {query}")
-    model_kwargs = {"device": device}
+    model_kwargs = {"device": device, "trust_remote_code": True}
     encode_kwargs = {"normalize_embeddings": True}
     if "bge-m3" in embedding:
         embeddings = BgeM3Embeddings(use_fp16=True, device=device)
-    else:
+    if "bge-" in embedding:
         embeddings = HuggingFaceBgeEmbeddings(
+            model_name=embedding,
+            model_kwargs=model_kwargs,
+            encode_kwargs=encode_kwargs
+        )
+    else:
+        embeddings = HuggingFaceEmbeddings(
             model_name=embedding,
             model_kwargs=model_kwargs,
             encode_kwargs=encode_kwargs
