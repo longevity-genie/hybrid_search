@@ -12,6 +12,7 @@ dependencies:
   - jupyter
   - protobuf
   - xformers
+  - mkl
   - pip:
       - langchain>=0.2.11
       - langchain_community>=0.2.10

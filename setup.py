@@ -7,7 +7,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with codecs.open(os.path.join(here, "README.md"), encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
-VERSION = '0.0.13'
+VERSION = '0.0.14'
 DESCRIPTION = 'Hybrid search with OpenSearch and Langchain'
 LONG_DESCRIPTION = 'Package for the hybrid search with opensearch and langchain library'
 
@@ -21,7 +21,7 @@ setup(
     long_description_content_type="text/markdown",
     long_description=long_description,
     packages=find_packages(),
-    install_requires=['pycomfort>=0.0.15', 'click','transformers>=4.35.2', "sentence_transformers", "opensearch-py>=2.6.0", "langchain>=0.2.11", "langchain-community>=0.2.10"],
+    install_requires=['pycomfort>=0.0.15', 'click','transformers>=4.35.2', "sentence_transformers", "opensearch-py>=2.6.0", "langchain>=0.2.11", "langchain-community>=0.2.10", "langchain-huggingface>=0.0.3"],
     keywords=['python', 'llm', 'science', 'review', 'hybrid search', 'semantic search'],
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",

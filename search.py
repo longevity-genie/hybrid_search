@@ -39,7 +39,7 @@ def search(url: str, index: str, device: str, embedding: str, query: str, k: int
 
     # Example functionality: Performing a search and printing results
     #results = docsearch.similarity_search_with_score(query, k, search_type = HYBRID_SEARCH, search_pipeline = "norm-pipeline")
-    found = docsearch.hybrid_search(query, k, search_pipeline = "norm-pipeline", threshold=threshold)
+    found = docsearch.hybrid_search(query, k, search_pipeline = "norm-pipeline", threshold=threshold, timeout=100)
     print(f"len results {len(found)}")
     results = rerank_extend_results(query, found)
     print("Search IDS:")
