@@ -4,7 +4,8 @@ import click
 import loguru
 from click import Context
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
-from langchain_community.embeddings import HuggingFaceBgeEmbeddings, HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
+from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from pycomfort.config import configure_logger, LogLevel, LOG_LEVELS, load_environment_keys
@@ -35,7 +36,7 @@ def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, 
     for i, doc in enumerate(docs):
         doc.metadata['page_id'] = doc.metadata['source'].split('/')[-1].split('.')[0]
 
-    model_kwargs = {"device": device}
+    model_kwargs = {"device": device, "trust_remote_code": True}
     encode_kwargs = {"normalize_embeddings": True}
 
     if "bge-m3" in embedding:
@@ -70,12 +71,12 @@ def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, 
 @app.command("main")
 @click.option('--data-path', show_default=True, default='data/tacutopapers_test_rsids_10k/', help='Path to the data directory.')
 @click.option('--glob-pattern', show_default=True, default='*.txt', help='Glob pattern for files.')
-@click.option('--embedding', show_default=True, default='BAAI/bge-large-en-v1.5', help='Type of embedding to use.') #can also be allenai/specter2_aug2023refresh
+@click.option('--embedding', show_default=True, default='Alibaba-NLP/gte-large-en-v1.5', help='Type of embedding to use.') #can also use BAAI/bge-en-icl , BAAI/bge-large-en-v1.5 and also be allenai/specter2_aug2023refresh
 @click.option('--url', show_default=True, default='https://localhost:9200', help='URL for the pipeline.')
 @click.option('--user', show_default=True, default='admin', help='Username for the pipeline.')
 @click.option('--password', show_default=True, default='admin', help='Password for the pipeline.')
 @click.option('--pipeline-name', show_default=True, default='norm-pipeline', help='Name of the pipeline.')
-@click.option('--index_name', show_default=True, default='index-bge-test_rsids_10k', help='Name of index')
+@click.option('--index_name', show_default=True, default='index-gte-test_rsids_10k', help='Name of index')
 @click.option('--device', show_default=True, default='cpu', help='Device to use')
 @click.option('--space', type=click.Choice(["cosinesimil", "l2", "innerproduct", "l1", "linf"], False), default='l2', help='Space to use for OpenSearch')
 @click.option('--log_level', type=click.Choice(LOG_LEVELS, case_sensitive=False), default=LogLevel.DEBUG.value, help="logging level")

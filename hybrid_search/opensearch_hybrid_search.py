@@ -22,7 +22,7 @@ from langchain_core.embeddings import Embeddings
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from requests import Response
 
-HYBRID_SEARCH = "hybrid_search"
+HYBRID_SEARCH = "script_scoring" #"hybrid_search"
 
 def rerank_results(query: str, documents: list[Document], reranker: Optional[FlagReranker] = None) -> list[(str, Document)]:
     """reranks the resulting documents"""

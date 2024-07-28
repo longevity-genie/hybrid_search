@@ -10,13 +10,16 @@ dependencies:
   - pytorch
   - sentence-transformers
   - jupyter
+  - protobuf
+  - xformers
   - pip:
       - langchain>=0.2.11
       - langchain_community>=0.2.10
+      - langchain-huggingface>=0.0.3
       - opensearch-py>=2.6.0
       - twine
       - adapters
       - pycomfort>=0.0.15
       - psutil #some weird dependency
-      - transformers>=4.35.2
+      - transformers>=4.43.3
       - FlagEmbedding>=1.2.10
