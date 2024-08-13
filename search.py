@@ -21,8 +21,11 @@ def app(ctx):
 @click.option('--query', default='What is ageing?', help='The query to search for')
 @click.option('--k', default=10, help='Number of search results to return')
 @click.option('--threshold', default=None, help='Threshold to cut out results')
+@click.option('--username', default='admin', help='Username for the OpenSearch cluster')
+@click.option('--password', default='Mind2@Mind', help='Password for the OpenSearch cluster')
 @click.option('--verbose', default=False, help='How much to print')
-def search(url: str, index: str, device: str, embedding: str, query: str, k: int, threshold: Optional[float], verbose: bool):
+def search(url: str, index: str, device: str, embedding: str, query: str, k: int,
+           threshold: Optional[float], username: str, password: str, verbose: bool):
     print(f"searching in INDEX: {index}, \nQUERY: {query}")
     model_kwargs = {"device": device, "trust_remote_code": True}
     encode_kwargs = {"normalize_embeddings": True}
@@ -41,7 +44,11 @@ def search(url: str, index: str, device: str, embedding: str, query: str, k: int
             encode_kwargs=encode_kwargs
         )
 
-    docsearch: OpenSearchHybridSearch = OpenSearchHybridSearch.create(url, index, embeddings)
+    docsearch: OpenSearchHybridSearch = OpenSearchHybridSearch.create(url,
+                                                                      index,
+                                                                      embeddings,
+                                                                      username=username,
+                                                                      password=password)
 
     # Example functionality: Performing a search and printing results
     #results = docsearch.similarity_search_with_score(query, k, search_type = HYBRID_SEARCH, search_pipeline = "norm-pipeline")

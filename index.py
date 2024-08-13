@@ -15,6 +15,7 @@ from FlagEmbedding import BGEM3FlagModel
 from hybrid_search.novel_embeddings import BgeM3Embeddings
 from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
 import logging
+import torch
 from opensearchpy import OpenSearch, exceptions
 from opensearchpy import OpenSearch, RequestsHttpConnection
 
@@ -31,6 +32,8 @@ def app(ctx: Context):
 def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, user: str, password: str, pipeline_name: str, index_name: str, device: str, space: str, logger: Optional["loguru.Logger"] = None):
     logger.info(f"indexing from {data_path} using pattern: {glob_pattern} \n using {embedding} with URL {url} \n  USER: {user}  PASSWORD: {password} \n index_name {index_name} ")
     loader = DirectoryLoader(data_path, glob=glob_pattern, loader_cls=TextLoader)
+    if device == "detect":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
     docs: list[Document] = loader.load()
 
     for i, doc in enumerate(docs):
@@ -74,23 +77,25 @@ def index_function(data_path: str, glob_pattern: str, embedding: str, url: str, 
 @click.option('--embedding', show_default=True, default='Alibaba-NLP/gte-large-en-v1.5', help='Type of embedding to use.') #can also use BAAI/bge-en-icl , BAAI/bge-large-en-v1.5 and also be allenai/specter2_aug2023refresh
 @click.option('--url', show_default=True, default='https://localhost:9200', help='URL for the pipeline.')
 @click.option('--user', show_default=True, default='admin', help='Username for the pipeline.')
-@click.option('--password', show_default=True, default='admin', help='Password for the pipeline.')
+@click.option('--password', show_default=True, default='Mind2@Mind', help='Password for the pipeline.')
 @click.option('--pipeline-name', show_default=True, default='norm-pipeline', help='Name of the pipeline.')
 @click.option('--index_name', show_default=True, default='index-gte-test_rsids_10k', help='Name of index')
-@click.option('--device', show_default=True, default='cpu', help='Device to use')
+@click.option('--device', show_default=True, default='detect', help='Device to use')
 @click.option('--space', type=click.Choice(["cosinesimil", "l2", "innerproduct", "l1", "linf"], False), default='l2', help='Space to use for OpenSearch')
 @click.option('--log_level', type=click.Choice(LOG_LEVELS, case_sensitive=False), default=LogLevel.DEBUG.value, help="logging level")
 def main(data_path: str, glob_pattern: str, embedding: str, url: str, user: str, password: str, pipeline_name: str, index_name: str, device: str, space: str, log_level: str):
     logger = configure_logger(log_level)
     logger.add("./logs/hybrid_index_{time}.log")
     load_environment_keys(usecwd=True)
+    if device == "detect":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
     return index_function(data_path, glob_pattern, embedding, url, user, password, pipeline_name, index_name, device, space, logger)
 
 
 @app.command("test_connection")
 @click.option('--url', default='https://localhost:9200', help='URL of the OpenSearch cluster')
 @click.option('--username', default='admin', help='Username for the OpenSearch cluster')
-@click.option('--password', default='admin', help='Password for the OpenSearch cluster')
+@click.option('--password', default='Mind2@Mind', help='Password for the OpenSearch cluster')
 @click.option('--use-ssl', default=True, type=bool, help='Use SSL for connection')
 @click.option('--ssl-show-warn', default=False, type=bool, help='Show SSL warnings')
 def test_opensearch(url: str, username: str, password: str, use_ssl: bool, ssl_show_warn: bool):
@@ -132,7 +137,7 @@ def test_opensearch(url: str, username: str, password: str, use_ssl: bool, ssl_s
     @app.command("delete_index")
     @click.option('--url', default='https://localhost:9200', help='URL of the OpenSearch cluster')
     @click.option('--username', default='admin', help='Username for the OpenSearch cluster')
-    @click.option('--password', default='admin', help='Password for the OpenSearch cluster')
+    @click.option('--password', default='Mind2@Mind', help='Password for the OpenSearch cluster')
     @click.option('--use-ssl', default=True, type=bool, help='Use SSL for connection')
     @click.option('--ssl-show-warn', default=False, type=bool, help='Show SSL warnings')
     @click.option('--index-name', default='test_index', help='Name of the index to be deleted')
@@ -162,6 +167,20 @@ def test_opensearch(url: str, username: str, password: str, use_ssl: bool, ssl_s
 
         except exceptions.OpenSearchException as e:
             click.echo(f"Error interacting with OpenSearch: {e}")
+
+@app.command("gte")
+@click.pass_context
+def gte_command(ctx, *args, **kwargs):
+    # You can set default values for any option you want to override
+    kwargs['embedding'] = 'Alibaba-NLP/gte-large-en-v1.5'
+
+    if 'index_name' not in kwargs:
+        index_name = "index-gte-test_rsids_10k"
+        print(f"no index name set, setting up default as {index_name}")
+        kwargs['index_name'] = index_name
+
+    # Call the main command with the new defaults
+    ctx.invoke(main, *args, **kwargs)
 
 @app.command("bge")
 @click.pass_context

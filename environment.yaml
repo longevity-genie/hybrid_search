@@ -14,8 +14,8 @@ dependencies:
   - xformers
   - mkl
   - pip:
-      - langchain>=0.2.11
-      - langchain_community>=0.2.10
+      - langchain>=0.2.13
+      - langchain_community>=0.2.12
       - langchain-huggingface>=0.0.3
       - opensearch-py>=2.6.0
       - twine
@@ -23,4 +23,6 @@ dependencies:
       - pycomfort>=0.0.15
       - psutil #some weird dependency
       - transformers>=4.43.3
-      - FlagEmbedding>=1.2.10
+      - peft
+      - triton
+      - FlagEmbedding>=1.2.11

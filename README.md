@@ -37,6 +37,7 @@ Open http://localhost:5601/ to explore the dashboard, "admin" is used both as us
 micromamba activate hybrid_search #to activate environment
 pip install -e . #[optional] install current package locally
 ```
+- Create .env file, you can use .env.template
 - Launch search to perform test search.
 ```bash
 python index.py #to index
