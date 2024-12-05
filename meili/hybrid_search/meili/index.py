@@ -2,36 +2,33 @@ import typer
 import meilisearch
 import os
 from dotenv import load_dotenv
-
+from hybrid_search.meili.rag import *
+import requests
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel, Field, ConfigDict
+from hybrid_search.meili.rag import *
 load_dotenv(override=True)
-key = os.getenv("MEILI_MASTER_KEY")
+key = os.getenv("MEILI_MASTER_KEY", "fancy_master_key")
 
 app = typer.Typer()
+
+
 
 @app.command()
 def add_documents(
     host: str = typer.Option("127.0.0.1", help="Meilisearch host"),
     port: int = typer.Option(7700, help="Meilisearch port")
 ):
-    key = os.getenv("MEILI_MASTER_KEY")
-    client = meilisearch.Client(f'http://{host}:{port}', key)
-    
-    # Try to get the index, if it doesn't exist, create it
-    try:
-        index = client.get_index('test')
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        print(f"Error type: {type(e)}")
-        print("Attempting to create index...")
-        index = client.create_index('test', {'primaryKey': 'id'})
+    config = MeiliConfig(host=host, port=port, api_key=key)
+    client = MeiliRAG(config)
     
     documents = [
-        {'id': 1, 'name': 'test', 'description': 'test'},
-        {'id': 2, 'name': 'test', 'description': 'test'},
+        Document(id=1, name='test', description='test'),
+        Document(id=2, name='test', description='test'),
     ]
     
-    index.add_documents(documents)
-    typer.echo(f"Added {len(documents)} documents to the 'test' index.")
+    count = client.add_documents('test', documents)
+    typer.echo(f"Added {count} documents to the 'test' index.")
 
 @app.command()
 def test_query(
@@ -39,46 +36,43 @@ def test_query(
     host: str = typer.Option("127.0.0.1", help="Meilisearch host"),
     port: int = typer.Option(7700, help="Meilisearch port")
 ):
-    client = meilisearch.Client(f'http://{host}:{port}', key)
-    index = client.index('test')
-
-    
-    results = index.search(query)
-    index.search
+    config = MeiliConfig(host=host, port=port, api_key=key)
+    client = MeiliRAG(config)
+    results = client.search('test', query)
     
     typer.echo(f"Search results for '{query}':")
-    for hit in results['hits']:
-        typer.echo(f"ID: {hit['id']}, Name: {hit['name']}, Description: {hit['description']}")
+    for hit in results.hits:
+        typer.echo(f"ID: {hit.id}, Name: {hit.name}, Description: {hit.description}")
 
 @app.command()
 def delete_index(
+    index_name: str = typer.Option("test", help="Name of the index to delete"),
     host: str = typer.Option("127.0.0.1", help="Meilisearch host"),
     port: int = typer.Option(7700, help="Meilisearch port")
 ):
-    client = meilisearch.Client(f'http://{host}:{port}', key)
+    config = MeiliConfig(host=host, port=port, api_key=key)
+    client = MeiliRAG(config)
     
     try:
-        client.delete_index('test')
-        typer.echo("Successfully deleted the 'test' index.")
+        client.delete_index(index_name)
+        typer.echo(f"Successfully deleted the '{index_name}' index.")
     except Exception as e:
         typer.echo(f"An error occurred while deleting the index: {e}")
 
 @app.command()
 def add_index(
-    index_name: str = typer.Argument(..., help="Name of the index to create"),
+    index_name: str = typer.Option("test", help="Name of the index to create"),
     primary_key: str = typer.Option("id", help="Primary key field name"),
     host: str = typer.Option("127.0.0.1", help="Meilisearch host"),
     port: int = typer.Option(7700, help="Meilisearch port"),
-    model_name: str = typer.Option("BAAI/bge-m3", help="Model name"),
+    model_name: str = typer.Option("Alibaba-NLP/gte-en-mlm-large", help="Model name"),
 ):
-    client = meilisearch.Client(f'http://{host}:{port}', key)
-    embedder = {'name': 'test', 'source': 'huggingFace', 'vector_name': 'test', 'model_name': 'BAAI/bge-m3', 'new_line_replacement': '\\n'}
-
+    config = MeiliConfig(host=host, port=port, api_key=key)
+    client = MeiliRAG(config)
+    
     try:
-        index = client.create_index(index_name, {'primaryKey': primary_key})
+        index = client.create_index(index_name, primary_key, model_name)
         typer.echo(f"Successfully created index '{index_name}' with primary key '{primary_key}'")
-        index.update_embedders(
-            )
     except Exception as e:
         typer.echo(f"An error occurred while creating the index: {e}")
 
