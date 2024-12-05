@@ -12,8 +12,8 @@ from pycomfort.config import configure_logger, LogLevel, LOG_LEVELS, load_enviro
 from pycomfort.logging import timing
 from typing import Optional
 from FlagEmbedding import BGEM3FlagModel
-from hybrid_search.novel_embeddings import BgeM3Embeddings
-from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch
+from hybrid_search.opensearch.novel_embeddings import BgeM3Embeddings
+from hybrid_search.opensearch.opensearch_hybrid_search import OpenSearchHybridSearch
 import logging
 import torch
 from opensearchpy import OpenSearch, exceptions

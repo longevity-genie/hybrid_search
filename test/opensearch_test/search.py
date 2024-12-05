@@ -3,6 +3,7 @@ from typing import Optional
 import click
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 from langchain_huggingface.embeddings import HuggingFaceEmbeddings
+from hybrid_search
 from hybrid_search.novel_embeddings import BgeM3Embeddings
 from hybrid_search.opensearch_hybrid_search import OpenSearchHybridSearch, rerank_results, rerank_extend_results
 
