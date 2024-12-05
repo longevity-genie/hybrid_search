@@ -41,8 +41,10 @@ def test_query(
 ):
     client = meilisearch.Client(f'http://{host}:{port}', key)
     index = client.index('test')
+
     
     results = index.search(query)
+    index.search
     
     typer.echo(f"Search results for '{query}':")
     for hit in results['hits']:
@@ -60,6 +62,25 @@ def delete_index(
         typer.echo("Successfully deleted the 'test' index.")
     except Exception as e:
         typer.echo(f"An error occurred while deleting the index: {e}")
+
+@app.command()
+def add_index(
+    index_name: str = typer.Argument(..., help="Name of the index to create"),
+    primary_key: str = typer.Option("id", help="Primary key field name"),
+    host: str = typer.Option("127.0.0.1", help="Meilisearch host"),
+    port: int = typer.Option(7700, help="Meilisearch port"),
+    model_name: str = typer.Option("BAAI/bge-m3", help="Model name"),
+):
+    client = meilisearch.Client(f'http://{host}:{port}', key)
+    embedder = {'name': 'test', 'source': 'huggingFace', 'vector_name': 'test', 'model_name': 'BAAI/bge-m3', 'new_line_replacement': '\\n'}
+
+    try:
+        index = client.create_index(index_name, {'primaryKey': primary_key})
+        typer.echo(f"Successfully created index '{index_name}' with primary key '{primary_key}'")
+        index.update_embedders(
+            )
+    except Exception as e:
+        typer.echo(f"An error occurred while creating the index: {e}")
 
 if __name__ == "__main__":
     app()
