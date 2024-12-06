@@ -7,6 +7,9 @@ import requests
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field, ConfigDict
 
+# Add at the top of the file, after the imports
+DEFAULT_EMBEDDING_MODEL = "Alibaba-NLP/gte-en-mlm-large"
+
 class MeiliConfig(BaseModel):
     host: str = Field(default="127.0.0.1", description="Meilisearch host")
     port: int = Field(default=7700, description="Meilisearch port")
@@ -22,14 +25,8 @@ class MeiliConfig(BaseModel):
             headers["Authorization"] = f"Bearer {self.api_key}"
         return headers
 
-class Document(BaseModel):
-    id: int
-    name: str
-    description: str
-    model_config = ConfigDict(extra='allow')
-
 class SearchResult(BaseModel):
-    hits: List[Document]
+    hits: List[Dict[str, Any]]
     processing_time_ms: int
     query: str
     model_config = ConfigDict(extra='allow')
@@ -60,16 +57,14 @@ class MeiliRAG:
         except requests.exceptions.RequestException as e:
             return False
 
-    def add_documents(self, index_name: str, documents: List[Document]) -> int:
+    def add_documents(self, index_name: str, documents: List[Dict[str, Any]]) -> int:
         try:
             index = self.client.get_index(index_name)
         except Exception as e:
             print(f"Index not found, creating new index '{index_name}'...")
             index = self.client.create_index(index_name, {'primaryKey': 'id'})
         
-        # Convert Pydantic models to dicts for Meilisearch
-        docs_dict = [doc.model_dump() for doc in documents]
-        index.add_documents(docs_dict)
+        index.add_documents(documents)
         return len(documents)
 
     def search(self, index_name: str, query: str) -> SearchResult:
@@ -83,19 +78,33 @@ class MeiliRAG:
     def configure_embedder(
         self,
         index_name: str,
-        model_name: str = "Alibaba-NLP/gte-en-mlm-large",
-        name: str = "default"
+        name: str = "default",
+        source: str = "userProvided",
+        dimensions: Optional[int] = 1024,
+        model_name: str = DEFAULT_EMBEDDING_MODEL
     ) -> bool:
         """Configure an embedder in Meilisearch with specified name."""
+        embedder_config = {
+            'source': source,
+        }
+        
+        # Add appropriate fields based on source
+        if source == "userProvided":
+            embedder_config.update({
+                'dimensions': dimensions
+            })
+        else:
+            embedder_config.update({
+                'modelUrl': model_name,
+                'documentTemplate': "{text}"
+            })
+
         js = {
             "embedders": {
-                name: {
-                    'source': 'huggingFace',
-                    'model': model_name,
-                    "documentTemplate": "{text}"
-                }
+                name: embedder_config
             }
         }
+        
         try:
             headers = {
                 "Authorization": f"Bearer {self.config.api_key}",
@@ -118,7 +127,7 @@ class MeiliRAG:
         self, 
         index_name: str, 
         primary_key: str = "id",
-        model_name: str = "Alibaba-NLP/gte-en-mlm-large"
+        model_name: str = DEFAULT_EMBEDDING_MODEL
     ) -> None:
         # Remove the vector store check since it's done in initialization
         index = self.client.create_index(index_name, {'primaryKey': primary_key})

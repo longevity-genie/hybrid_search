@@ -1,10 +1,10 @@
 import typer
 from sentence_transformers import SentenceTransformer
 from pprint import pprint
-from hybrid_search.core.models import *
-from hybrid_search.core.explore import *
+from hybrid_search.core.embeddings import *
+from hybrid_search.core.utils import *
+from hybrid_search.core.text_splitter import TextSplitter
 from pathlib import Path
-from hybrid_search.core.split import *
 app = typer.Typer()
 
 
@@ -29,11 +29,16 @@ def main():
     print("dimensions: ", model.get_sentence_embedding_dimension())
     print("max_seq_length: ", model.max_seq_length)
     file = Path("/home/antonkulaga/sources/hybrid_search/data/tacutopapers_test_rsids_10k/108.txt")
-    splits = split_text_file_semantically_annotated(file, model, similarity_threshold=0.93, source="/home/antonkulaga/sources/hybrid_search/data/tacutopapers_test_rsids_10k/108.txt")
-    for split in splits:
-        print("=========================")
-        print(split)
-
+    #simple_splitter = 
+    #splits = split_text_file_semantically_annotated(file, model, similarity_threshold=0.92, source="/home/antonkulaga/sources/hybrid_search/data/tacutopapers_test_rsids_10k/108.txt")
+    splitter = TextSplitter(model)
+    documents = splitter.split_file(file)
+    for document in documents:
+        #print(f"=============SHAPE:======={document.vectors.shape}=========================")
+        #pprint(document.vectors)
+        print(document.content)
+        print("===============================================")
+        #print(document.save_to_yaml(Path(file.name).with_suffix(".yaml")))
     #typer.echo(f"Hello {name}!")
 
 if __name__ == "__main__":

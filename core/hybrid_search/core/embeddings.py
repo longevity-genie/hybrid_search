@@ -16,8 +16,11 @@ def load_sentence_transformer_model(model_name_or_path: str) -> SentenceTransfor
 
 
 
-def load_BioBERT() -> SentenceTransformer:
-    return load_sentence_transformer_model("pritamdeka/BioBERT-mnli-snli-scinli-scitail-mednli-stsb")
+#def load_BioBERT() -> SentenceTransformer:
+#    return load_sentence_transformer_model("pritamdeka/BioBERT-mnli-snli-scinli-scitail-mednli-stsb")
+
+#def load_bio_lord() -> SentenceTransformer:
+#    return load_sentence_transformer_model("FremyCompany/BioLORD-2023")
 
 def load_gte_multilingual() -> SentenceTransformer:
     return load_sentence_transformer_model("Alibaba-NLP/gte-multilingual-base")
@@ -28,8 +31,6 @@ def load_gte_multilingual_mlm() -> SentenceTransformer:
 def load_gte_mlm_en() -> SentenceTransformer:
     return load_sentence_transformer_model("Alibaba-NLP/gte-en-mlm-large")
 
-def load_bio_lord() -> SentenceTransformer:
-    return load_sentence_transformer_model("FremyCompany/BioLORD-2023")
 
 def load_specter() -> SentenceTransformer:
     return load_sentence_transformer_model("sentence-transformers/allenai-specter")
